@@ -143,11 +143,47 @@ jobs:
             git push --force origin "$branch"
           fi
 
-          pr_body_file="$GITHUB_WORKSPACE/doc/PRMessage.md"
-          if [ ! -f "$pr_body_file" ]; then
-            echo "Error: PR template not found at $pr_body_file" >&2
+          pr_msg_file="$GITHUB_WORKSPACE/doc/PRMessage.md"
+          pr_template_file=".github/pull_request_template.md"
+
+          if [ ! -f "$pr_msg_file" ]; then
+            echo "Error: PR message file not found at $pr_msg_file" >&2
             exit 1
           fi
+
+          python3 - "$pr_msg_file" "$pr_template_file" <<'PY' > pr_body.md
+          import sys
+          from pathlib import Path
+
+          msg = Path(sys.argv[1]).read_text(encoding="utf-8")
+          template = Path(sys.argv[2]).read_text(encoding="utf-8")
+
+          lines = msg.splitlines()
+          title = ""
+          desc_lines = []
+          in_description = False
+
+          for line in lines:
+              if line.startswith("# Pull Request for PluginCatalogue"):
+                  continue
+              if line.startswith("## Description"):
+                  in_description = True
+                  continue
+              if not title and not in_description and line.strip():
+                  title = line.strip()
+                  continue
+              if in_description:
+                  desc_lines.append(line)
+
+          title_file = Path("pr_title.txt")
+          title_file.write_text(title, encoding="utf-8")
+
+          desc = "\n".join(desc_lines).strip()
+          body = desc + "\n\n" + template
+          print(body)
+          PY
+
+          pr_title="$(cat pr_title.txt)"
 
           existing_pr="$(gh pr list \
             --repo MCDReforged/PluginCatalogue \
@@ -159,13 +195,14 @@ jobs:
             echo "PR #${existing_pr} already exists for ${plugin_id}, updating."
             gh pr edit "$existing_pr" \
               --repo MCDReforged/PluginCatalogue \
-              --body-file "$pr_body_file"
+              --title "$pr_title" \
+              --body-file pr_body.md
           else
             gh pr create \
               --repo MCDReforged/PluginCatalogue \
               --head "${fork_owner}:${branch}" \
               --base master \
-              --title "Update plugin: ${plugin_id}" \
-              --body-file "$pr_body_file"
+              --title "$pr_title" \
+              --body-file pr_body.md
             echo "Created PR for ${plugin_id}"
           fi
