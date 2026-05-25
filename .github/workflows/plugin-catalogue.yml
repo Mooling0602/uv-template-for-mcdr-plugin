@@ -90,6 +90,10 @@ jobs:
               "branch": meta.get("main-branch", "main"),
               "labels": labels,
               "related_path": "src",
+              "introduction": {
+                  "en_us": "../README.md",
+                  "zh_cn": "../README_en_US.md",
+              },
           }
 
           info_path = workspace / "plugin_info.json"
