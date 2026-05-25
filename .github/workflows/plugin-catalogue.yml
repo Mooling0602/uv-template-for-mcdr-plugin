@@ -119,7 +119,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git remote add upstream https://github.com/MCDReforged/PluginCatalogue.git
+          git remote set-url upstream https://github.com/MCDReforged/PluginCatalogue.git 2>/dev/null || \
+            git remote add upstream https://github.com/MCDReforged/PluginCatalogue.git
           git fetch upstream main
           git checkout -b "$branch" upstream/main
 
