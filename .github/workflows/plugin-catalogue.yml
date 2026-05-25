@@ -121,8 +121,8 @@ jobs:
 
           git remote set-url upstream https://github.com/MCDReforged/PluginCatalogue.git 2>/dev/null || \
             git remote add upstream https://github.com/MCDReforged/PluginCatalogue.git
-          git fetch upstream main
-          git checkout -b "$branch" upstream/main
+          git fetch upstream master
+          git checkout -b "$branch" upstream/master
 
           mkdir -p plugins
           cp "$GITHUB_WORKSPACE/plugin_info.json" "plugins/${plugin_id}.json"
@@ -163,7 +163,7 @@ jobs:
             gh pr create \
               --repo MCDReforged/PluginCatalogue \
               --head "${fork_owner}:${branch}" \
-              --base main \
+              --base master \
               --title "Update plugin: ${plugin_id}" \
               --body-file "$pr_body_file"
             echo "Created PR for ${plugin_id}"
