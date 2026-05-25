@@ -89,7 +89,7 @@ jobs:
               "repository": f"{base}/{owner}/{meta['name']}",
               "branch": meta.get("main-branch", "main"),
               "labels": labels,
-              "related_path": ".",
+              "related_path": "src",
           }
 
           info_path = workspace / "plugin_info.json"
