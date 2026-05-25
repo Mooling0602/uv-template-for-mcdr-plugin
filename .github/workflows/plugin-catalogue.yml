@@ -127,7 +127,7 @@ jobs:
           mkdir -p plugins
           cp "$GITHUB_WORKSPACE/plugin_info.json" "plugins/${plugin_id}.json"
 
-          if git diff --quiet --exit-code; then
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No changes detected for ${plugin_id}, skipping."
             exit 0
           fi
