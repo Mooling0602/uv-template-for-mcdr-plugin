@@ -113,13 +113,13 @@ jobs:
           echo "Fork owner: $fork_owner"
 
           gh repo fork MCDReforged/PluginCatalogue \
-            --clone=true \
-            --remote=true
+            --clone=true
 
           cd PluginCatalogue
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          git remote add upstream https://github.com/MCDReforged/PluginCatalogue.git
           git fetch upstream main
           git checkout -b "$branch" upstream/main
 
