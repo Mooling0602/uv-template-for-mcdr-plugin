@@ -125,15 +125,15 @@ jobs:
           git fetch upstream master
           git checkout -b "$branch" upstream/master
 
-          mkdir -p plugins
-          cp "$GITHUB_WORKSPACE/plugin_info.json" "plugins/${plugin_id}.json"
+          mkdir -p "plugins/${plugin_id}"
+          cp "$GITHUB_WORKSPACE/plugin_info.json" "plugins/${plugin_id}/plugin_info.json"
 
           if [ -z "$(git status --porcelain)" ]; then
             echo "No changes detected for ${plugin_id}, skipping."
             exit 0
           fi
 
-          git add "plugins/${plugin_id}.json"
+          git add "plugins/${plugin_id}/plugin_info.json"
           git commit -m "Update plugin: ${plugin_id}"
 
           if git push origin "$branch" 2>/dev/null; then
@@ -186,13 +186,16 @@ jobs:
 
           pr_title="$(cat pr_title.txt)"
 
-          existing_pr="$(gh pr list \
+          if gh pr view \
             --repo MCDReforged/PluginCatalogue \
             --head "${fork_owner}:${branch}" \
             --json number \
-            --jq '.[0].number')"
-
-          if [ -n "$existing_pr" ]; then
+            --jq '.number' >/dev/null 2>&1; then
+            existing_pr="$(gh pr view \
+              --repo MCDReforged/PluginCatalogue \
+              --head "${fork_owner}:${branch}" \
+              --json number \
+              --jq '.number')"
             echo "PR #${existing_pr} already exists for ${plugin_id}, updating."
             gh pr edit "$existing_pr" \
               --repo MCDReforged/PluginCatalogue \
