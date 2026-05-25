@@ -1,0 +1,169 @@
+name: Plugin Catalogue
+
+"on":
+  workflow_dispatch:
+    inputs:
+      label_information:
+        description: "Information - displays various kinds of information"
+        required: false
+        type: boolean
+        default: false
+      label_tool:
+        description: "Tool - utilities and game assistant plugins"
+        required: false
+        type: boolean
+        default: false
+      label_management:
+        description: "Management - manage server files and other operations"
+        required: false
+        type: boolean
+        default: false
+      label_api:
+        description: "API - provides API or library functionality for other plugins"
+        required: false
+        type: boolean
+        default: false
+      label_handler:
+        description: "Server Handler - provides a custom server handler"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate plugin catalogue info
+        run: |
+          python3 - "$GITHUB_WORKSPACE" "$(
+            python3 -c "
+          import json
+          print(json.dumps({
+              'information': '${{ github.event.inputs.label_information }}',
+              'tool': '${{ github.event.inputs.label_tool }}',
+              'management': '${{ github.event.inputs.label_management }}',
+              'api': '${{ github.event.inputs.label_api }}',
+              'handler': '${{ github.event.inputs.label_handler }}',
+          }))
+          "
+          )" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          workspace = Path(sys.argv[1])
+          dispatch_inputs = json.loads(sys.argv[2])
+
+          with open(workspace / "src/mcdreforged.plugin.json", encoding="utf-8") as f:
+              plugin = json.load(f)
+
+          import tomllib
+          with open(workspace / "gitrepo.toml", "rb") as f:
+              repo = tomllib.load(f)
+
+          meta = repo["meta"]
+          owner = next(a["github"] for a in meta["author"] if "github" in a)
+          base = next(
+              h["github"].rstrip("/")
+              for h in repo["platform"]["remote-hoster"]
+              if "github" in h
+          )
+
+          maintainers = []
+          for m in meta.get("maintainers", []):
+              if isinstance(m, dict) and "github" in m:
+                  maintainers.append({"name": m["github"], "link": f"{base}/{m['github']}"})
+
+          labels = [label_id for label_id, val in dispatch_inputs.items() if val == "true"]
+
+          info = {
+              "id": plugin["id"],
+              "authors": [{"name": owner, "link": f"{base}/{owner}"}],
+              "maintainers": maintainers,
+              "repository": f"{base}/{owner}/{meta['name']}",
+              "branch": meta.get("main-branch", "main"),
+              "labels": labels,
+              "related_path": ".",
+          }
+
+          info_path = workspace / "plugin_info.json"
+          info_path.write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8")
+          print(f"Generated plugin catalogue info for: {plugin['id']}")
+          PY
+
+      - name: Submit to PluginCatalogue
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "Error: GH_PAT secret is not set." >&2
+            exit 1
+          fi
+
+          plugin_id="$(jq -r '.id' plugin_info.json)"
+          branch="bot/update-${plugin_id}"
+
+          fork_owner="$(gh api user --jq '.login')"
+          echo "Fork owner: $fork_owner"
+
+          gh repo fork MCDReforged/PluginCatalogue \
+            --clone=true \
+            --remote=true
+
+          cd PluginCatalogue
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch upstream main
+          git checkout -b "$branch" upstream/main
+
+          mkdir -p plugins
+          cp "$GITHUB_WORKSPACE/plugin_info.json" "plugins/${plugin_id}.json"
+
+          if git diff --quiet --exit-code; then
+            echo "No changes detected for ${plugin_id}, skipping."
+            exit 0
+          fi
+
+          git add "plugins/${plugin_id}.json"
+          git commit -m "Update plugin: ${plugin_id}"
+
+          if git push origin "$branch" 2>/dev/null; then
+            echo "Pushed branch: $branch"
+          else
+            echo "Force pushing branch: $branch"
+            git push --force origin "$branch"
+          fi
+
+          pr_body_file="$GITHUB_WORKSPACE/doc/PRMessage.md"
+          if [ ! -f "$pr_body_file" ]; then
+            echo "Error: PR template not found at $pr_body_file" >&2
+            exit 1
+          fi
+
+          existing_pr="$(gh pr list \
+            --repo MCDReforged/PluginCatalogue \
+            --head "${fork_owner}:${branch}" \
+            --json number \
+            --jq '.[0].number')"
+
+          if [ -n "$existing_pr" ]; then
+            echo "PR #${existing_pr} already exists for ${plugin_id}, updating."
+            gh pr edit "$existing_pr" \
+              --repo MCDReforged/PluginCatalogue \
+              --body-file "$pr_body_file"
+          else
+            gh pr create \
+              --repo MCDReforged/PluginCatalogue \
+              --head "${fork_owner}:${branch}" \
+              --base main \
+              --title "Update plugin: ${plugin_id}" \
+              --body-file "$pr_body_file"
+            echo "Created PR for ${plugin_id}"
+          fi
