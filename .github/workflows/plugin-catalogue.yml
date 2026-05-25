@@ -1,4 +1,4 @@
-name: Plugin Catalogue
+name: PluginCatalogue
 
 "on":
   workflow_dispatch:
