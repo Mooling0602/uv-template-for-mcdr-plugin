@@ -186,25 +186,38 @@ jobs:
 
           pr_title="$(cat pr_title.txt)"
 
-          existing_pr="$(gh pr list \
+          create_output="$(gh pr create \
             --repo MCDReforged/PluginCatalogue \
             --head "${fork_owner}:${branch}" \
-            --state open \
-            --json number \
-            --jq 'if . | length > 0 then .[0].number else "" end')"
+            --base master \
+            --title "$pr_title" \
+            --body-file pr_body.md 2>&1 || true)"
 
-          if [ -n "$existing_pr" ]; then
-            echo "PR #${existing_pr} already exists for ${plugin_id}, updating."
-            gh pr edit "$existing_pr" \
-              --repo MCDReforged/PluginCatalogue \
-              --title "$pr_title" \
-              --body-file pr_body.md
-          else
-            gh pr create \
-              --repo MCDReforged/PluginCatalogue \
-              --head "${fork_owner}:${branch}" \
-              --base master \
-              --title "$pr_title" \
-              --body-file pr_body.md
+          if echo "$create_output" | grep -q "already exists"; then
+            existing_pr="$(echo "$create_output" | grep -oP 'https://github\.com/\S+/pull/(\d+)' | grep -oP '\d+$' || true)"
+            if [ -z "$existing_pr" ]; then
+              existing_pr="$(gh pr list \
+                --repo MCDReforged/PluginCatalogue \
+                --search "head:${branch}" \
+                --state open \
+                --json number \
+                --jq 'if . | length > 0 then .[0].number else "" end')"
+            fi
+            if [ -n "$existing_pr" ]; then
+              echo "PR #${existing_pr} already exists, updating."
+              gh pr edit "$existing_pr" \
+                --repo MCDReforged/PluginCatalogue \
+                --title "$pr_title" \
+                --body-file pr_body.md
+            else
+              echo "PR already exists but could not determine its number." >&2
+              exit 1
+            fi
+          elif echo "$create_output" | grep -q "https://github.com"; then
             echo "Created PR for ${plugin_id}"
+            echo "$create_output"
+          else
+            echo "Unexpected output from gh pr create:" >&2
+            echo "$create_output" >&2
+            exit 1
           fi
