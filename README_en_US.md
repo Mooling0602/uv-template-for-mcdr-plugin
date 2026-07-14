@@ -36,6 +36,26 @@ For an existing project, you can migrate the useful CI configurations and adapt 
 
 > Adapt this template to your needs. The code in this repository is still in early development and its stability is not guaranteed.
 
+## Plugin Dependency Management
+
+One benefit of using UV to manage MCDReforged plugin source code is that plugins can add other plugin source repositories with `uv add <url>`. This improves code completion and other development tooling.
+
+In most cases, any plugin source repository with a valid `pyproject.toml` file can be managed by UV.
+
+To add a plugin dependency, run:
+
+```sh
+uv add https://github.com/<author>/<repo_name>.git
+```
+
+When the upstream repository changes, update that dependency with:
+
+```sh
+uv sync --upgrade
+```
+
+This updates all dependencies that satisfy their version constraints. To update only one dependency, run `uv sync --upgrade-package <package_name>`, where `<package_name>` is the value of `[project].name` in the upstream project's `pyproject.toml`.
+
 ## License
 
 This project is licensed under the [GPLv3](LICENSE).
