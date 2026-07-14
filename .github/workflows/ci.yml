@@ -105,7 +105,7 @@ jobs:
         run: rm -f ./*.mcdr
 
       - name: Pack plugin
-        run: uv run mcdreforged pack -i src --ignore-file ["tools"]
+        run: uv run mcdreforged pack -i src --ignore-patterns tools
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

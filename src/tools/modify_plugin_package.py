@@ -2,7 +2,9 @@
 import argparse
 import fnmatch
 import json
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -41,6 +43,26 @@ def _is_ignored(name: str, patterns: list[tuple[bool, str]]) -> bool:
     return ignored
 
 
+def _write_text_atomically(path: Path, content: str) -> None:
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=path.parent,
+            delete=False,
+        ) as temporary_file:
+            temporary_path = Path(temporary_file.name)
+            temporary_file.write(content)
+            temporary_file.flush()
+            os.fsync(temporary_file.fileno())
+        temporary_path.chmod(path.stat().st_mode)
+        temporary_path.replace(path)
+    finally:
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink()
+
+
 def modify_plugin_package(
     src_dir: str = ".",
     *,
@@ -64,10 +86,20 @@ def modify_plugin_package(
         print(f"Error: Failed to parse '{json_path}': {e}", file=sys.stderr)
         sys.exit(1)
 
-    plugin_id: str | None = meta.get("id")
-    if not plugin_id:
+    if not isinstance(meta, dict):
+        print(f"Error: '{json_path}' must contain a JSON object.", file=sys.stderr)
+        sys.exit(1)
+
+    plugin_id = meta.get("id")
+    if (
+        not isinstance(plugin_id, str)
+        or not plugin_id.strip()
+        or "/" in plugin_id
+        or "\\" in plugin_id
+        or plugin_id in {".", ".."}
+    ):
         print(
-            f"Error: 'id' field not found or empty in '{json_path}'.",
+            f"Error: 'id' field in '{json_path}' must be a non-empty directory name.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -80,9 +112,9 @@ def modify_plugin_package(
 
     patterns.insert(0, (False, "tools"))
 
-    dirs = [
+    dirs = sorted(
         d for d in src.iterdir() if d.is_dir() and not _is_ignored(d.name, patterns)
-    ]
+    )
 
     if len(dirs) == 0:
         print(f"No plugin package directory found in '{src}'.")
@@ -113,11 +145,8 @@ def modify_plugin_package(
         )
         sys.exit(1)
 
-    target.rename(new_path)
-    print(f"Renamed: {target} -> {new_path}")
-
     if pyproject_dir is not None:
-        pp_dir = Path(pyproject_dir)
+        pp_dir = Path(pyproject_dir).resolve()
     else:
         pp_dir = src.parent
 
@@ -130,7 +159,12 @@ def modify_plugin_package(
         )
         sys.exit(1)
 
-    content = pp.read_text(encoding="utf-8")
+    try:
+        content = pp.read_text(encoding="utf-8")
+    except OSError as e:
+        print(f"Error: Failed to read '{pp}': {e}", file=sys.stderr)
+        sys.exit(1)
+
     old_entry = f'"src/{target.name}"'
     new_entry = f'"src/{plugin_id}"'
     if old_entry not in content:
@@ -140,8 +174,34 @@ def modify_plugin_package(
         )
         return
 
-    content = content.replace(old_entry, new_entry)
-    pp.write_text(content, encoding="utf-8")
+    updated_content = content.replace(old_entry, new_entry)
+    try:
+        target.rename(new_path)
+    except OSError as e:
+        print(
+            f"Error: Failed to rename '{target}' to '{new_path}': {e}", file=sys.stderr
+        )
+        sys.exit(1)
+
+    try:
+        _write_text_atomically(pp, updated_content)
+    except OSError as e:
+        try:
+            new_path.rename(target)
+        except OSError as rollback_error:
+            print(
+                f"Error: Failed to update '{pp}': {e}. "
+                f"Failed to roll back directory rename: {rollback_error}",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"Error: Failed to update '{pp}': {e}. Directory rename was rolled back.",
+                file=sys.stderr,
+            )
+        sys.exit(1)
+
+    print(f"Renamed: {target} -> {new_path}")
     print(f"Updated: {pp}")
 
 

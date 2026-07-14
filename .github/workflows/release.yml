@@ -46,7 +46,7 @@ jobs:
       - name: Build plugin
         run: |
           rm -f ./*.mcdr
-          uv run mcdreforged pack -i src --ignore-file ["tools"]
+          uv run mcdreforged pack -i src --ignore-patterns tools
 
       - name: Prepare release notes
         shell: bash
