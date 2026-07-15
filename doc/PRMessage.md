@@ -13,7 +13,9 @@ This file is used for CI to PR your plugin to [PluginCatalogue](https://github.c
 
 Change content in "Pull Request for PluginCatalogue" section to modify the PR title, and change content in "Description" section to modify the PR content.
 
-After edits done, you should open GitHub website, and set a secret variable named `GH_TOKEN` with your valid GitHub access token. Then manually trigger the CI in your repository at the website.
+After edits done, you should open GitHub website, and set a secret variable named `GH_PAT` with your valid GitHub access token. Then manually trigger the CI in your repository at the website.
+
+> Do not use personal access token, it's unsupported for submitting PRs. Use classic access token as `GH_PAT` instead.
 
 The CI configuration uses **force-push** to update the commit, and override the existing PR or create a new one if none exists or old PR is closed. If anything goes wrong, please do not trigger the CI again, and deal with anything manually.
 
