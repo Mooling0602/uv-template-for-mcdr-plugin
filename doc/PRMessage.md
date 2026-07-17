@@ -8,11 +8,11 @@ If everything fine, please reject this PR or remind the author, thanks.
 
 > Modify this file if you want to really add your plugin to the catalogue, then trigger the CI in GitHub website.
 
-## README
+## Additional Informations
 
 > Better keep and do not modify this section, except you are a human and you know what you are doing. Some operations can be done with human more easily, like accessing the GitHub website and submit something or click the button.
 
-This file is used for CI to PR your plugin to [PluginCatalogue](https://github.com/MCDReforged/PluginCatalogue).
+This file(as PRMessage.md) is used for CI to submit or modify your plugin to [PluginCatalogue](https://github.com/MCDReforged/PluginCatalogue).
 
 Change content in "Pull Request for PluginCatalogue" section to modify the PR title, and change content in "Description" section to modify the PR content.
 
