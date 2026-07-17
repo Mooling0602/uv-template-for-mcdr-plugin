@@ -9,6 +9,9 @@ If everything fine, please reject this PR or remind the author, thanks.
 > Modify this file if you want to really add your plugin to the catalogue, then trigger the CI in GitHub website.
 
 ## README
+
+> Better keep and do not modify this section, except you are a human and you know what you are doing. Some operations can be done with human more easily, like accessing the GitHub website and submit something or click the button.
+
 This file is used for CI to PR your plugin to [PluginCatalogue](https://github.com/MCDReforged/PluginCatalogue).
 
 Change content in "Pull Request for PluginCatalogue" section to modify the PR title, and change content in "Description" section to modify the PR content.
@@ -21,4 +24,4 @@ The CI configuration uses **force-push** to update the commit, and override the 
 
 > [!IMPORTANT]
 > Please read the [Contributing Guidelines](https://github.com/MCDReforged/PluginCatalogue/blob/master/CONTRIBUTING.md) carefully before you start to PR.
-> We are not responsible for any damage caused by your operations, use at your own risk.
+> We are not responsible for any damage caused by your operations, use at your own risk. But if any bugs found, please issue in [UV Template for MCDR Plugin Issues](https://github.com/Mooling0602/uv-template-for-mcdr-plugin/issues).

@@ -32,9 +32,9 @@ Run `./main.py --help` to see detailed help for the tool.
 
 You can also use this repository directly as a template and customize its configuration and source code to create your own plugin project.
 
-For an existing project, you can migrate the useful CI configurations and adapt the source-management structure as needed. However, we do not recommend copying the management tools, including their scripts and source code, other than `setup.py`.
+Check [Plugin Structure](doc/PluginStructure.md) to see how to migrate template structure and CI configurations to an already existing project.
 
-> Adapt this template to your needs. The code in this repository is still in early development and its stability is not guaranteed.
+Anyway, adapt this template to your needs. The code in this repository is still in early development and its stability is not guaranteed.
 
 ## Plugin Dependency Management
 
