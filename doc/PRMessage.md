@@ -18,10 +18,12 @@ Change content in "Pull Request for PluginCatalogue" section to modify the PR ti
 
 After edits done, you should open GitHub website, and set a secret variable named `GH_PAT` with your valid GitHub access token. Then manually trigger the CI in your repository at the website.
 
-> Do not use personal access token, it's unsupported for submitting PRs. Use classic access token as `GH_PAT` instead.
+> Do not use fine-grained token, it's unsupported for submitting PRs. Use classic access token as `GH_PAT` instead.
 
 The CI configuration uses **force-push** to update the commit, and override the existing PR or create a new one if none exists or old PR is closed. If anything goes wrong, please do not trigger the CI again, and deal with anything manually.
 
 > [!IMPORTANT]
 > Please read the [Contributing Guidelines](https://github.com/MCDReforged/PluginCatalogue/blob/master/CONTRIBUTING.md) carefully before you start to PR.
 > We are not responsible for any damage caused by your operations, use at your own risk. But if any bugs found, please issue in [UV Template for MCDR Plugin Issues](https://github.com/Mooling0602/uv-template-for-mcdr-plugin/issues).
+
+After things done, you should reply messages from the maintainers, and continue to do necessary edits if need.
