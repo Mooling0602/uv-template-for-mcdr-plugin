@@ -51,3 +51,7 @@ When porting CI configurations and the code structure to other projects, there a
 For files need to be not **IGNORED**, you should directly copy to the target project you're porting to. **Use tools like `mv`, `cp` and do filesystem operations, instead of read content then write into.** This can help you(LLMs) mitigate hallucinations. Then you can continue modifications in your projects.
 
 Ignore these rules may cause unexpected errors, and increase unnecessary workload.
+
+### Extra tips for AI agents
+
+- For **doc/PRMessage.md**, do not modify "Additional Informations" section. It contains instructions for using [this template repository](https://github.com/Mooling0602/uv-template-for-mcdr-plugin), if you change something to other projects, that puzzles will be caused.
